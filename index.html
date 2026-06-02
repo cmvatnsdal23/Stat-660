@@ -989,13 +989,18 @@ r_labels &lt;- gdp_happiness %&gt;%
   ];
   const sg = document.getElementById('scatterGrid');
   scatterData.forEach(d => {
-    const pts = Array.from({length:60}, () => ({
-      x: Math.random()*2, y: d.r * (Math.random()*2) + (1-d.r)*(Math.random()*4+2.5)
-    }));
+    // Generate correlated (gdp, happiness) pairs, both in [0,1]
+    const pts = Array.from({length:60}, () => {
+      const gdp = Math.random();                          // x in [0,1]
+      const noise = (Math.random() - 0.5) * 2 * Math.sqrt(1 - d.r * d.r);
+      const hap = Math.max(0, Math.min(1, d.r * gdp + noise * 0.5 + 0.15));
+      return { x: gdp, y: hap };
+    });
+    // Map to SVG coords: x from 30..185, y from 10..150 (inverted)
     let circles = pts.map(p => {
-      const cx = 30 + p.x * 130;
-      const cy = 160 - (p.y - 2.5) * 20;
-      return `<circle cx="${cx}" cy="${cy}" r="3" fill="#2980b9" opacity="0.6"/>`;
+      const cx = 30 + p.x * 155;
+      const cy = 150 - p.y * 140;
+      return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#2980b9" opacity="0.55"/>`;
     }).join('');
     sg.innerHTML += `<div class="scatter-panel">
       <div class="panel-year">${d.year}</div>
