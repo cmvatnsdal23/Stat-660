@@ -106,6 +106,19 @@
       padding: 0 32px 80px;
     }
 
+    /* ── INTRO BLOCK ── */
+    .intro-block {
+      margin: 48px 0 0;
+      padding: 32px 40px;
+      background: white;
+      border: 1px solid var(--rule);
+      border-left: 4px solid var(--accent);
+      border-radius: 0 8px 8px 0;
+      font-size: 17px;
+      line-height: 1.85;
+      color: var(--ink);
+    }
+
     section {
       padding-top: 64px;
       border-top: 1px solid var(--rule);
@@ -451,6 +464,11 @@
 </nav>
 
 <main>
+
+  <!-- ── INTRO ── -->
+  <div class="intro-block">
+    The data, available on Wikipedia, contains measures of happiness across several countries. The data measures happiness on a scale of 1 to 10 and dates back to 2017. The data also measures GDP per capita and life expectancy during these periods. The purpose of this assignment is to use various data visualization techniques to view trends and relationships in the data.
+  </div>
 
   <!-- ── SETUP ── -->
   <section id="setup">
@@ -987,41 +1005,35 @@ r_labels &lt;- gdp_happiness %&gt;%
     {year:2019, r:0.800},
     {year:2020, r:0.771}
   ];
-  // SVG drawing area: x from X0..X1, y from Y_TOP..Y_BOT (y inverted in SVG)
   const X0=35, X1=190, Y_TOP=10, Y_BOT=145;
   const sg = document.getElementById('scatterGrid');
   scatterData.forEach(d => {
-    // Box-Muller for normal randoms
     function randn() {
       let u=0,v=0;
       while(u===0) u=Math.random();
       while(v===0) v=Math.random();
       return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
     }
-    // Generate correlated pair: both standard normal, then scale to [0,1]
     const pts = Array.from({length:55}, () => {
       const z1 = randn();
       const z2 = randn();
       const x_raw = z1;
       const y_raw = d.r * z1 + Math.sqrt(1 - d.r*d.r) * z2;
-      // Normalise both to ~[0,1] using known std range [-2.5, 2.5]
       const x = Math.max(0.02, Math.min(0.98, (x_raw + 2.5) / 5));
       const y = Math.max(0.02, Math.min(0.98, (y_raw + 2.5) / 5));
       return {x, y};
     });
     let circles = pts.map(p => {
       const cx = X0 + p.x * (X1 - X0);
-      const cy = Y_BOT - p.y * (Y_BOT - Y_TOP);  // invert y
+      const cy = Y_BOT - p.y * (Y_BOT - Y_TOP);
       return `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="3" fill="#2980b9" opacity="0.6"/>`;
     }).join('');
     const rLabel = d.r.toFixed(3);
     sg.innerHTML += `<div class="scatter-panel">
       <div class="panel-year">${d.year}</div>
       <svg viewBox="0 0 200 165" xmlns="http://www.w3.org/2000/svg">
-        <!-- axes -->
         <line x1="${X0}" y1="${Y_TOP}" x2="${X0}" y2="${Y_BOT}" stroke="#d4cfc4" stroke-width="1.5"/>
         <line x1="${X0}" y1="${Y_BOT}" x2="${X1+5}" y2="${Y_BOT}" stroke="#d4cfc4" stroke-width="1.5"/>
-        <!-- trend line from bottom-left to top-right -->
         <line x1="${X0}" y1="${Y_BOT}" x2="${X1}" y2="${Y_TOP+5}" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="4,3"/>
         ${circles}
         <text x="${X1-2}" y="${Y_BOT-4}" font-size="9" text-anchor="end" fill="#e74c3c" font-weight="600">r = ${rLabel}</text>
@@ -1059,7 +1071,6 @@ r_labels &lt;- gdp_happiness %&gt;%
   });
 
   // ── CHOROPLETH MAP (Q8) ──
-  // Happiness 2020 data keyed by ISO alpha-3 code
   const happinessData = {
     FIN:7.809,DNK:7.646,CHE:7.560,ISL:7.504,NOR:7.488,NLD:7.449,SWE:7.353,
     NZL:7.300,AUT:7.294,LUX:7.238,CAN:7.232,AUS:7.223,GBR:7.165,ISR:7.129,
@@ -1089,22 +1100,18 @@ r_labels &lt;- gdp_happiness %&gt;%
     RWA:3.312,MWI:3.519,ZMB:3.759,ZWE:2.694,MOZ:3.681,
     MDG:3.698,COD:4.312,AGO:4.033,ZAF:4.814,BWA:3.478,
     NAM:4.574,SWZ:4.308,LSO:3.512,MUS:6.049,
-    AUS:7.223,PNG:4.634,FJI:5.025,
+    PNG:4.634,FJI:5.025,
     GRC:5.694,CYP:6.422,
-    MEX:6.465,
     CUB:6.040,DOM:5.545,JAM:5.890,HTI:3.615,
-    HND:5.953,CRI:7.069,
+    HND:5.953,
     VEN:4.729,GUY:5.575,SUR:5.876
   };
 
   const tooltip = document.getElementById('ch-tooltip');
 
-  // Score → color using RdYlGn scale (red=low, green=high)
   function scoreColor(score) {
     if (score == null) return '#cccccc';
-    // Clamp to [2,8]
     const t = Math.max(0, Math.min(1, (score - 2) / 6));
-    // 0=red #d73027, 0.5=yellow #fee08b, 1=green #1a9850
     let r, g, b;
     if (t < 0.5) {
       const u = t * 2;
@@ -1120,7 +1127,37 @@ r_labels &lt;- gdp_happiness %&gt;%
     return `rgb(${r},${g},${b})`;
   }
 
-  // Fetch Natural Earth world topojson from CDN
+  const numToAlpha3 = {
+    4:'AFG',8:'ALB',12:'DZA',24:'AGO',32:'ARG',36:'AUS',40:'AUT',
+    50:'BGD',56:'BEL',68:'BOL',76:'BRA',100:'BGR',116:'KHM',
+    120:'CMR',124:'CAN',140:'CAF',152:'CHL',156:'CHN',170:'COL',
+    178:'COD',188:'CRI',192:'CUB',196:'CYP',203:'CZE',
+    208:'DNK',214:'DOM',218:'ECU',818:'EGY',222:'SLV',
+    231:'ETH',246:'FIN',250:'FRA',266:'GAB',276:'DEU',288:'GHA',
+    300:'GRC',320:'GTM',332:'HTI',340:'HND',348:'HUN',
+    356:'IND',360:'IDN',364:'IRN',368:'IRQ',372:'IRL',
+    376:'ISR',380:'ITA',388:'JAM',392:'JPN',400:'JOR',
+    398:'KAZ',404:'KEN',408:'PRK',410:'KOR',414:'KWT',
+    417:'KGZ',418:'LAO',422:'LBN',426:'LSO',430:'LBR',
+    434:'LBY',440:'LTU',442:'LUX',450:'MDG',454:'MWI',
+    458:'MYS',466:'MLI',484:'MEX',504:'MAR',508:'MOZ',
+    516:'NAM',524:'NPL',528:'NLD',554:'NZL',558:'NIC',
+    566:'NGA',578:'NOR',586:'PAK',591:'PAN',604:'PER',
+    608:'PHL',616:'POL',620:'PRT',630:'PRI',634:'QAT',
+    642:'ROU',643:'RUS',646:'RWA',682:'SAU',686:'SEN',
+    694:'SLE',706:'SOM',710:'ZAF',724:'ESP',729:'SDN',
+    752:'SWE',756:'CHE',760:'SYR',762:'TJK',764:'THA',
+    768:'TGO',780:'TTO',788:'TUN',792:'TUR',795:'TKM',
+    800:'UGA',804:'UKR',784:'ARE',826:'GBR',840:'USA',
+    858:'URY',860:'UZB',862:'VEN',704:'VNM',887:'YEM',
+    894:'ZMB',716:'ZWE',688:'SRB',191:'HRV',703:'SVK',
+    705:'SVN',512:'OMN',496:'MNG',51:'ARM',
+    31:'AZE',268:'GEO',70:'BIH',807:'MKD',499:'MNE',
+    144:'LKA',104:'MMR',180:'COD',
+    478:'MRT',480:'MUS',233:'EST',
+    428:'LVA',112:'BLR',64:'BTN'
+  };
+
   fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
     .then(r => r.json())
     .then(world => {
@@ -1138,43 +1175,6 @@ r_labels &lt;- gdp_happiness %&gt;%
         .translate([W / 2, H / 2]);
 
       const path = d3.geoPath().projection(projection);
-
-      // Build ISO numeric → alpha3 map using d3-provided data
-      // world-atlas uses ISO numeric codes; we need to map to alpha3
-      const numToAlpha3 = {
-        4:'AFG',8:'ALB',12:'DZA',24:'AGO',32:'ARG',36:'AUS',40:'AUT',
-        50:'BGD',56:'BEL',68:'BOL',76:'BRA',100:'BGR',116:'KHM',
-        120:'CMR',124:'CAN',140:'CAF',152:'CHL',156:'CHN',170:'COL',
-        178:'COD',188:'CRI',192:'CUB',196:'CYP',203:'CZE',
-        208:'DNK',214:'DOM',218:'ECU',818:'EGY',222:'SLV',
-        231:'ETH',246:'FIN',250:'FRA',266:'GAB',276:'DEU',288:'GHA',
-        300:'GRC',320:'GTM',332:'HTI',340:'HND',348:'HUN',
-        356:'IND',360:'IDN',364:'IRN',368:'IRQ',372:'IRL',
-        376:'ISR',380:'ITA',388:'JAM',392:'JPN',400:'JOR',
-        398:'KAZ',404:'KEN',408:'PRK',410:'KOR',414:'KWT',
-        417:'KGZ',418:'LAO',422:'LBN',426:'LSO',430:'LBR',
-        434:'LBY',440:'LTU',442:'LUX',450:'MDG',454:'MWI',
-        458:'MYS',466:'MLI',484:'MEX',504:'MAR',508:'MOZ',
-        516:'NAM',524:'NPL',528:'NLD',554:'NZL',558:'NIC',
-        566:'NGA',578:'NOR',586:'PAK',591:'PAN',604:'PER',
-        608:'PHL',616:'POL',620:'PRT',630:'PRI',634:'QAT',
-        642:'ROU',643:'RUS',646:'RWA',682:'SAU',686:'SEN',
-        694:'SLE',706:'SOM',710:'ZAF',724:'ESP',729:'SDN',
-        752:'SWE',756:'CHE',760:'SYR',762:'TJK',764:'THA',
-        768:'TGO',780:'TTO',788:'TUN',792:'TUR',795:'TKM',
-        800:'UGA',804:'UKR',784:'ARE',826:'GBR',840:'USA',
-        858:'URY',860:'UZB',862:'VEN',704:'VNM',887:'YEM',
-        894:'ZMB',716:'ZWE',688:'SRB',191:'HRV',703:'SVK',
-        705:'SVN',512:'OMN',496:'MNG',050:'BGD',051:'ARM',
-        031:'AZE',268:'GEO',070:'BIH',807:'MKD',499:'MNE',
-        388:'JAM',388:'JAM',144:'LKA',104:'MMR',180:'COD',
-        024:'AGO',074:'BHR',76:'BRA',887:'YEM',887:'YEM',
-        024:'AGO',478:'MRT',480:'MUS',620:'PRT',233:'EST',
-        428:'LVA',112:'BLR',792:'TUR',682:'SAU',818:'EGY',
-        788:'TUN',012:'DZA',504:'MAR',288:'GHA',404:'KEN',
-        834:'TZA',800:'UGA',710:'ZAF',064:'BTN',524:'NPL'
-      };
-
       const countries2 = topojson.feature(world, world.objects.countries);
 
       svg.append('g')
@@ -1192,7 +1192,6 @@ r_labels &lt;- gdp_happiness %&gt;%
         .on('mousemove', function(event, d) {
           const alpha3 = numToAlpha3[+d.id];
           const score = alpha3 ? happinessData[alpha3] : null;
-          const name = alpha3 || ('Country ' + d.id);
           tooltip.style.opacity = '1';
           tooltip.style.left = (event.clientX + 12) + 'px';
           tooltip.style.top  = (event.clientY - 28) + 'px';
@@ -1204,7 +1203,6 @@ r_labels &lt;- gdp_happiness %&gt;%
           tooltip.style.opacity = '0';
         });
 
-      // Graticule
       svg.append('path')
         .datum(d3.geoGraticule()())
         .attr('d', path)
